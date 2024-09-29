@@ -2,8 +2,8 @@ module MIPSALU (ALUctl, A, B, ALUOut, Zero);
   input [3:0]  ALUctl;
   input [31:0] A,B;
   output reg [31:0] ALUOut;
-  Output Zero;
-  assing Zero = (ALUOut==0); //Zero is true if ALUOut is 0
+  output Zero;
+  assign Zero = (ALUOut==0); //Zero is true if ALUOut is 0
   always @(ALUctl, A, B) begin //
     case(ALUctl)
       0: ALUOut <= A & B;
