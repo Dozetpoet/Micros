@@ -1,0 +1,14 @@
+{
+    "DESIGN_NAME": "adder_8b_pipeline",
+    "VERILOG_FILES": "dir::src/*.v",
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 10.0,
+    "FP_PDN_MULTILAYER": true,
+    "FP_SIZING": "absolute",
+    "DIE_AREA": "0 0 80 80",
+    "FP_PDN_AUTO_ADJUST": false,
+    "FP_PDN_VPITCH": 20,
+    "FP_PDN_HPITCH": 20,
+    "FP_PDN_VOFFSET": 0,
+    "FP_PDN_HOFFSET": 0
+  }
