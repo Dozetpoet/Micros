@@ -1,5 +1,5 @@
 {
-    "DESIGN_NAME": "adder_8b_pipeline",
+    "DESIGN_NAME": "ALU",
     "VERILOG_FILES": "dir::src/*.v",
     "CLOCK_PORT": "clk",
     "CLOCK_PERIOD": 10.0,
