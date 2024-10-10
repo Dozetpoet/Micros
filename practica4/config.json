@@ -1,5 +1,5 @@
 {
-  "DESIGN_NAME": "ALU",
+  "DESIGN_NAME": "MIPSALU",
   "VERILOG_FILES": "dir::src/*.v",
   "FP_PDN_MULTILAYER": true,
   "FP_SIZING": "absolute",
