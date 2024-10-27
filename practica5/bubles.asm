@@ -1,6 +1,8 @@
 section .data
     array db 5, 3, 8, 1, 9, 2, 6   ; Array a ordenar
     array_len equ $ - array         ; Longitud del array
+    msg db 'Array ordenado: ', 0    ; Mensaje para imprimir
+    msg_len equ $ - msg              ; Longitud del mensaje
 
 section .text
     global _start
@@ -44,6 +46,42 @@ no_swap:
 
     pop ecx                        ; Restauramos el contador de pasadas
     loop outer_loop                ; Repetimos hasta que el array esté ordenado
+
+    ; Imprimir el mensaje
+    mov eax, 4                     ; syscall para sys_write
+    mov ebx, 1                     ; file descriptor 1 (stdout)
+    mov ecx, msg                   ; puntero al mensaje
+    mov edx, msg_len               ; longitud del mensaje
+    int 0x80                       ; llamada al sistema
+
+    ; Imprimir los elementos ordenados
+    mov ecx, array_len             ; Contador de elementos
+    add esp, array_len * 4         ; Mueve el puntero de la pila al inicio del array
+
+print_loop:
+    dec ecx
+    js exit                        ; Si llegamos al final, salimos del bucle
+    mov eax, [esp + ecx * 4]       ; Cargamos el elemento en EAX
+    add eax, '0'                   ; Convertimos a carácter ASCII
+    push eax                       ; Pusheamos el carácter
+
+    ; Imprimir carácter
+    mov eax, 4                     ; syscall para sys_write
+    mov ebx, 1                     ; file descriptor 1 (stdout)
+    mov ecx, esp                   ; puntero al carácter
+    mov edx, 1                     ; longitud del carácter
+    int 0x80                       ; llamada al sistema
+
+    pop eax                        ; Restauramos el carácter
+
+    ; Imprimir un espacio
+    mov eax, 4                     ; syscall para sys_write
+    mov ebx, 1                     ; file descriptor 1 (stdout)
+    mov ecx, esp                   ; puntero al espacio
+    mov edx, 1                     ; longitud del espacio
+    int 0x80                       ; llamada al sistema
+
+    jmp print_loop                ; Repetir para el siguiente elemento
 
 exit:
     ; Llamada al sistema para salir del programa
