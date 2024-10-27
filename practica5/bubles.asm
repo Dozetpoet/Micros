@@ -7,7 +7,7 @@ section .data
     newline db 10                      ; Nueva línea
 
 section .bss
-    buffer resb 12                     ; Buffer para almacenar un número de 32 bits convertido a cadena
+    buffer resb 12                     ; Buffer para almacenar un número convertido a cadena
 
 section .text
     global _start
@@ -35,14 +35,16 @@ outer_loop:
 
 inner_loop:
     ; Comparamos elementos adyacentes en la pila
-    mov eax, [esp + edx + 4]           ; Cargamos el primer elemento en EAX
-    mov ebx, [esp + edx + 8]           ; Cargamos el segundo elemento en EBX
+    mov eax, [esp + edx + 4]          ; Cargamos el primer elemento en EAX
+    mov ebx, [esp + edx + 8]          ; Cargamos el segundo elemento en EBX
 
     ; Si el primer elemento es mayor, intercambiamos
     cmp eax, ebx
     jle no_swap
-    mov [esp + edx + 4], ebx           ; Intercambiamos los elementos
-    mov [esp + edx + 8], eax
+
+    ; Intercambiamos los elementos
+    mov [esp + edx + 4], ebx          ; Guardamos el menor
+    mov [esp + edx + 8], eax           ; Guardamos el mayor
 
 no_swap:
     add edx, 4                         ; Avanzamos a la siguiente posición en la pila (en palabras de 4 bytes)
@@ -61,10 +63,10 @@ no_swap:
 
     ; Imprimir los elementos ordenados
     mov ecx, array_len                 ; Contador de elementos
+    xor edx, edx                       ; Inicializar desplazamiento para la pila
 
 print_loop:
-    ; Retrocedemos en la pila
-    mov eax, [esp + 4 * ecx]           ; Cargamos el elemento en EAX
+    mov eax, [esp + edx + 4]           ; Cargamos el elemento en EAX
     call print_number                  ; Imprimimos el número en EAX
 
     ; Imprimir un espacio
@@ -74,8 +76,9 @@ print_loop:
     mov edx, 1                         ; longitud del espacio
     int 0x80                           ; llamada al sistema
 
-    dec ecx                            ; Decrementamos el contador
-    jnz print_loop                     ; Si hay más elementos, repetimos
+    add edx, 4                         ; Avanzamos al siguiente elemento
+    cmp edx, (array_len * 4)           ; Comparamos con el límite de elementos en la pila
+    jl print_loop                      ; Si hay más elementos, repetir
 
     ; Imprimir nueva línea al final
     mov eax, 4
@@ -92,26 +95,35 @@ exit:
 
 ; Procedimiento para imprimir un número en EAX
 print_number:
-    ; Convertir número en EAX a string
+    mov ebx, eax                       ; Guardamos EAX en EBX
     mov edi, buffer + 11               ; Puntero al final del buffer
     mov ecx, 10                        ; Divisor para extraer dígitos (base 10)
-    mov ebx, eax                       ; Guardamos EAX en EBX para restaurarlo después
 
-    ; Convertimos el número a ASCII en el buffer
+    ; Manejo especial para el caso de 0
+    cmp eax, 0
+    je print_zero                      ; Si es 0, manejamos el caso
+
 convert_loop:
-    xor edx, edx                       ; Limpia edx para la división
-    div ecx                            ; Divide EAX entre 10, resultado en EAX, residuo en EDX
+    xor edx, edx                       ; Limpiar EDX antes de la división
+    div ecx                             ; Divide EAX entre 10, resultado en EAX, residuo en EDX
     add dl, '0'                        ; Convierte el residuo a carácter ASCII
     dec edi                            ; Retrocede el buffer
     mov [edi], dl                      ; Almacena el dígito convertido
     test eax, eax                      ; Verifica si queda algún dígito
     jnz convert_loop                   ; Repite mientras queden dígitos
 
+    jmp print_output                   ; Imprimimos el número convertido
+
+print_zero:
+    mov byte [edi], '0'                ; Almacena '0' en el buffer
+    dec edi                            ; Retrocede el buffer
+
+print_output:
     ; Imprimir el número convertido
     mov eax, 4                         ; syscall para sys_write
     mov ebx, 1                         ; file descriptor 1 (stdout)
     mov ecx, edi                       ; Puntero al número convertido
-    sub edx, edi                       ; Longitud del número
+    mov edx, buffer + 11 - edi         ; Calculamos la longitud del número
     int 0x80                           ; Llamada al sistema
 
     ret                                 ; Regresar del procedimiento
