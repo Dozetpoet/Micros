@@ -10,7 +10,7 @@ section .text
 global _start
 
 _start:
-    ; Cargar los números en la pila y en el área temporal "sorted"
+    ; Cargar los números en el área temporal "sorted"
     mov ecx, 5                ; Número de elementos a cargar
     lea esi, [numbers]        ; Dirección de la lista de números
     lea edi, [sorted]         ; Dirección del área temporal para la lista ordenada
@@ -18,7 +18,6 @@ _start:
 load_numbers:
     lodsb                     ; Cargar el siguiente byte de [numbers] en AL
     stosb                     ; Almacenar AL en la lista "sorted"
-    push eax                  ; Empujar AL (el número) en la pila
     loop load_numbers         ; Repetir hasta que ECX sea cero
 
     ; Ordenamiento burbuja usando el área temporal en memoria
@@ -76,11 +75,11 @@ print_numbers:
     int 0x80
 
     inc edi                   ; Mover al siguiente número en "sorted"
-    loop print_numbers        ; Repetir para cada número en "sorted"
+    dec ecx                   ; Reducir el contador para imprimir solo 5 veces
+    jnz print_numbers         ; Repetir hasta que se hayan impreso 5 números
 
     ; Salir del programa
     mov eax, 1                ; syscall número para salir
     xor ebx, ebx              ; Código de salida 0
     int 0x80
-
 
