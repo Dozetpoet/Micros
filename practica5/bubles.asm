@@ -83,3 +83,4 @@ print_numbers:
     xor ebx, ebx              ; Código de salida 0
     int 0x80
 
+
