@@ -82,4 +82,3 @@ print_numbers:
     mov eax, 1                ; syscall número para salir
     xor ebx, ebx              ; Código de salida 0
     int 0x80
-
