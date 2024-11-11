@@ -1,6 +1,7 @@
 section .data
     numbers db 3, 8, 6, 4, 1   ; Lista de 5 números desordenados
     newline db 10              ; Carácter de nueva línea
+    space db ' ', 0            ; Espacio entre números
 
 section .bss
     temp resb 1                ; Variable temporal para intercambio
@@ -54,6 +55,9 @@ skip_swap:
     cmp ecx, 1
     jg bubble_sort             ; Repetir el bucle hasta ordenar toda la lista
 
+    ; Imprimir el arreglo final
+    call print_array
+
     ; Salir del programa
     mov eax, 1                 ; syscall número para salir
     xor ebx, ebx               ; Código de salida 0
@@ -78,16 +82,24 @@ print_numbers:
     mov edx, 1                 ; Número de bytes a escribir
     int 0x80                   ; Interrupción para la salida
 
-    ; Imprimir espacio entre los números
+    ; Imprimir un espacio entre los números
     mov eax, 4
     mov ebx, 1
-    lea ecx, [newline]         ; Dirección del carácter de nueva línea
-    mov edx, 1                 ; Número de bytes a escribir
+    lea ecx, [space]
+    mov edx, 1
     int 0x80
 
     inc edi                    ; Mover al siguiente número en "sorted"
     loop print_numbers         ; Repetir hasta que se hayan imprimido 5 números
 
+    ; Imprimir nueva línea después del arreglo completo
+    mov eax, 4
+    mov ebx, 1
+    lea ecx, [newline]
+    mov edx, 1
+    int 0x80
+
     ret
+
 
 
