@@ -1,129 +1,55 @@
 section .data
-    array db 5, 3, 8, 1, 9, 2, 6       ; Array a ordenar
-    array_len equ $ - array            ; Longitud del array
-    msg db 'Array ordenado: ', 0       ; Mensaje para imprimir
-    msg_len equ $ - msg                ; Longitud del mensaje
-    space db ' ', 0                    ; Espacio
-    newline db 10                      ; Nueva línea
+    numbers db 5, 3, 8, 1, 2  ; Lista de 5 números desordenados
 
 section .bss
-    buffer resb 12                     ; Buffer para almacenar un número convertido a cadena
+    temp resb 1               ; Variable temporal para intercambiar valores
 
 section .text
-    global _start
+global _start
 
 _start:
-    ; Pusheamos los elementos del array en la pila
-    mov ecx, array_len                 ; Contador de elementos
-    mov esi, array                     ; Puntero al inicio del array
+    ; Cargar los números en la pila
+    mov ecx, 5                ; Número de elementos a cargar
+    lea esi, [numbers]        ; Dirección de la lista de números
 
-push_loop:
-    dec ecx
-    js sort_bubble                     ; Si llegamos al final, salimos del bucle
-    movzx eax, byte [esi + ecx]        ; Cargamos el elemento en EAX (extendiéndolo a 32 bits)
-    push eax                           ; Colocamos el valor en la pila
-    jmp push_loop
+load_numbers:
+    lodsb                     ; Cargar el siguiente byte de [numbers] en AL
+    push eax                  ; Empujar AL (el número) en la pila
+    loop load_numbers         ; Repetir hasta que ECX sea cero
 
-sort_bubble:
-    ; Algoritmo de ordenamiento de burbuja usando la pila
-    mov ecx, array_len                 ; Tamaño del array
-    dec ecx                            ; Hacer n-1 pasadas
+    ; Ordenamiento burbuja usando la pila
+    mov ecx, 5                ; Número de elementos en la lista
+bubble_sort:
+    dec ecx                   ; Cada pasada reduce el rango a verificar
+    mov ebx, ecx              ; EBX será el índice interno del bucle
 
-outer_loop:
-    push ecx                           ; Guardamos el contador de pasadas en la pila
-    mov edx, 0                         ; Reiniciamos desplazamiento de elementos en la pila
+    ; Bucle interno de comparación
+    mov edi, esp              ; Apuntar EDI a la cima de la pila
+compare_loop:
+    mov al, byte [edi]        ; AL = valor en EDI
+    mov ah, byte [edi + 4]    ; AH = valor en EDI+4 (siguiente elemento)
 
-inner_loop:
-    ; Comparamos elementos adyacentes en la pila
-    mov eax, [esp + edx + 4]          ; Cargamos el primer elemento en EAX
-    mov ebx, [esp + edx + 8]          ; Cargamos el segundo elemento en EBX
+    ; Comparar y, si es necesario, intercambiar
+    cmp al, ah
+    jle no_swap               ; Si ya está en orden, no intercambia
 
-    ; Si el primer elemento es mayor, intercambiamos
-    cmp eax, ebx
-    jle no_swap
-
-    ; Intercambiamos los elementos
-    mov [esp + edx + 4], ebx          ; Guardamos el menor
-    mov [esp + edx + 8], eax           ; Guardamos el mayor
+    ; Intercambiar valores usando temp
+    mov [temp], al            ; Guardar AL en temp
+    mov al, ah                ; Mover AH a AL
+    mov [edi], al             ; Almacenar en EDI
+    mov al, byte [temp]       ; Recuperar el valor original de AL
+    mov [edi + 4], al         ; Almacenar en EDI+4
 
 no_swap:
-    add edx, 4                         ; Avanzamos a la siguiente posición en la pila (en palabras de 4 bytes)
-    cmp edx, (array_len - 1) * 4       ; Comparamos con el límite del array en pila
-    jl inner_loop                      ; Si aún faltan comparaciones, seguimos
+    add edi, 4                ; Mover al siguiente par en la pila
+    dec ebx                   ; Disminuir el índice interno
+    jnz compare_loop          ; Repetir hasta ordenar todos los pares
 
-    pop ecx                            ; Restauramos el contador de pasadas
-    loop outer_loop                    ; Repetimos hasta que el array esté ordenado
+    cmp ecx, 1
+    jg bubble_sort            ; Repetir el bucle hasta ordenar toda la lista
 
-    ; Imprimir el mensaje
-    mov eax, 4                         ; syscall para sys_write
-    mov ebx, 1                         ; file descriptor 1 (stdout)
-    mov ecx, msg                       ; puntero al mensaje
-    mov edx, msg_len                   ; longitud del mensaje
-    int 0x80                           ; llamada al sistema
-
-    ; Imprimir los elementos ordenados
-    mov ecx, array_len                 ; Contador de elementos
-    xor edx, edx                       ; Inicializar desplazamiento para la pila
-
-print_loop:
-    mov eax, [esp + edx + 4]           ; Cargamos el elemento en EAX
-    call print_number                  ; Imprimimos el número en EAX
-
-    ; Imprimir un espacio
-    mov eax, 4                         ; syscall para sys_write
-    mov ebx, 1                         ; file descriptor 1 (stdout)
-    mov ecx, space                     ; puntero al espacio
-    mov edx, 1                         ; longitud del espacio
-    int 0x80                           ; llamada al sistema
-
-    add edx, 4                         ; Avanzamos al siguiente elemento
-    cmp edx, (array_len * 4)           ; Comparamos con el límite de elementos en la pila
-    jl print_loop                      ; Si hay más elementos, repetir
-
-    ; Imprimir nueva línea al final
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, newline
-    mov edx, 1
+    ; Salir del programa
+    mov eax, 1                ; syscall número para salir
+    xor ebx, ebx              ; Código de salida 0
     int 0x80
 
-exit:
-    ; Llamada al sistema para salir del programa
-    mov eax, 1                         ; Código de salida
-    xor ebx, ebx                       ; Código de retorno
-    int 0x80                           ; Interrupción para salir
-
-; Procedimiento para imprimir un número en EAX
-print_number:
-    mov ebx, eax                       ; Guardamos EAX en EBX
-    mov edi, buffer + 11               ; Puntero al final del buffer
-    mov ecx, 10                        ; Divisor para extraer dígitos (base 10)
-
-    ; Manejo especial para el caso de 0
-    cmp eax, 0
-    je print_zero                      ; Si es 0, manejamos el caso
-
-convert_loop:
-    xor edx, edx                       ; Limpiar EDX antes de la división
-    div ecx                             ; Divide EAX entre 10, resultado en EAX, residuo en EDX
-    add dl, '0'                        ; Convierte el residuo a carácter ASCII
-    dec edi                            ; Retrocede el buffer
-    mov [edi], dl                      ; Almacena el dígito convertido
-    test eax, eax                      ; Verifica si queda algún dígito
-    jnz convert_loop                   ; Repite mientras queden dígitos
-
-    jmp print_output                   ; Imprimimos el número convertido
-
-print_zero:
-    mov byte [edi], '0'                ; Almacena '0' en el buffer
-    dec edi                            ; Retrocede el buffer
-
-print_output:
-    ; Imprimir el número convertido
-    mov eax, 4                         ; syscall para sys_write
-    mov ebx, 1                         ; file descriptor 1 (stdout)
-    mov ecx, edi                       ; Puntero al número convertido
-    mov edx, buffer + 11 - edi         ; Calculamos la longitud del número
-    int 0x80                           ; Llamada al sistema
-
-    ret                                 ; Regresar del procedimiento
