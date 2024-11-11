@@ -49,12 +49,13 @@ skip_swap:
     cmp ecx, 1
     jg bubble_sort            ; Repetir el bucle hasta ordenar toda la lista
 
-    ; Imprimir los números ordenados
+    ; Imprimir los números ordenados sin sacar de la pila
     mov ecx, 5                ; Número de elementos a imprimir
+    mov edi, esp              ; Apuntar EDI al tope de la pila
 
 print_numbers:
-    pop eax                   ; Obtener el valor del tope de la pila
-    add eax, '0'              ; Convertir a carácter ASCII
+    mov al, byte [edi]        ; Obtener el valor en el tope de la pila
+    add al, '0'               ; Convertir a carácter ASCII
     mov [temp], al            ; Guardar el carácter en temp
 
     ; Llamada al sistema para escribir en la salida estándar
@@ -71,10 +72,12 @@ print_numbers:
     mov edx, 1
     int 0x80
 
+    add edi, 4                ; Mover al siguiente número en la pila
     loop print_numbers        ; Repetir para cada número en la pila
 
     ; Salir del programa
     mov eax, 1                ; syscall número para salir
     xor ebx, ebx              ; Código de salida 0
     int 0x80
+
 
