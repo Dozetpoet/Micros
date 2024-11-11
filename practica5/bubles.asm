@@ -1,8 +1,9 @@
 section .data
     numbers db 5, 3, 8, 1, 2  ; Lista de 5 números desordenados
+    newline db 10             ; Carácter de nueva línea
 
 section .bss
-    temp resb 1               ; Variable temporal para intercambiar valores
+    temp resb 1               ; Variable temporal para intercambio
 
 section .text
 global _start
@@ -37,19 +38,4 @@ compare_loop:
     mov [temp], al            ; Guardar AL en temp
     mov al, ah                ; Mover AH a AL
     mov [edi], al             ; Almacenar en EDI
-    mov al, byte [temp]       ; Recuperar el valor original de AL
-    mov [edi + 4], al         ; Almacenar en EDI+4
-
-no_swap:
-    add edi, 4                ; Mover al siguiente par en la pila
-    dec ebx                   ; Disminuir el índice interno
-    jnz compare_loop          ; Repetir hasta ordenar todos los pares
-
-    cmp ecx, 1
-    jg bubble_sort            ; Repetir el bucle hasta ordenar toda la lista
-
-    ; Salir del programa
-    mov eax, 1                ; syscall número para salir
-    xor ebx, ebx              ; Código de salida 0
-    int 0x80
 
