@@ -32,10 +32,48 @@ compare_loop:
 
     ; Comparar y, si es necesario, intercambiar
     cmp al, ah
-    jle no_swap               ; Si ya está en orden, no intercambia
+    jle skip_swap             ; Si ya está en orden, no intercambia
 
     ; Intercambiar valores usando temp
     mov [temp], al            ; Guardar AL en temp
     mov al, ah                ; Mover AH a AL
     mov [edi], al             ; Almacenar en EDI
+    mov al, byte [temp]       ; Recuperar el valor original de AL
+    mov [edi + 4], al         ; Almacenar en EDI+4
 
+skip_swap:
+    add edi, 4                ; Mover al siguiente par en la pila
+    dec ebx                   ; Disminuir el índice interno
+    jnz compare_loop          ; Repetir hasta ordenar todos los pares
+
+    cmp ecx, 1
+    jg bubble_sort            ; Repetir el bucle hasta ordenar toda la lista
+
+    ; Imprimir los números ordenados
+    mov ecx, 5                ; Número de elementos a imprimir
+
+print_numbers:
+    pop eax                   ; Obtener el valor del tope de la pila
+    add eax, '0'              ; Convertir a carácter ASCII
+    mov [temp], al            ; Guardar el carácter en temp
+
+    ; Llamada al sistema para escribir en la salida estándar
+    mov eax, 4                ; syscall número para escribir
+    mov ebx, 1                ; descriptor de archivo para salida estándar
+    lea ecx, [temp]           ; Dirección del carácter a imprimir
+    mov edx, 1                ; Número de bytes a escribir
+    int 0x80                  ; Interrupción para la salida
+
+    ; Imprimir nueva línea después de cada número
+    mov eax, 4
+    mov ebx, 1
+    lea ecx, [newline]
+    mov edx, 1
+    int 0x80
+
+    loop print_numbers        ; Repetir para cada número en la pila
+
+    ; Salir del programa
+    mov eax, 1                ; syscall número para salir
+    xor ebx, ebx              ; Código de salida 0
+    int 0x80
